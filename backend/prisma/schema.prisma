@@ -1,0 +1,61 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id                     String   @id @default(uuid())
+  email                  String   @unique
+  passwordHash           String
+  telegramUsername       String?
+  telegramChatId         String?
+  notificationEmail      String?
+  telegramAlertsActive   Boolean  @default(true)
+  emailAlertsActive      Boolean  @default(true)
+  language               String   @default("en")
+  showSentimentChart     Boolean  @default(true)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  alerts                 Alert[]
+}
+
+model Coin {
+  id             String    @id @default(uuid())
+  symbol         String    @unique
+  name           String
+  currentPrice   Float
+  priceChange24h Float
+  updatedAt      DateTime  @updatedAt
+  articles       Article[]
+  alerts         Alert[]
+}
+
+model Article {
+  id              String   @id @default(uuid())
+  title           String
+  content         String   @db.Text
+  url             String
+  summary         String?  @db.Text
+  sentiment       String?
+  expandedContent String?  @db.Text
+  publishedAt     DateTime
+  coinId          String?
+  coin            Coin?    @relation(fields: [coinId], references: [id], onDelete: Cascade)
+  createdAt       DateTime @default(now())
+}
+
+model Alert {
+  id             String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  coinId         String
+  coin           Coin     @relation(fields: [coinId], references: [id], onDelete: Cascade)
+  targetPrice    Float
+  isTriggered    Boolean  @default(false)
+  deliveryStatus String   @default("PENDING")
+  createdAt      DateTime @default(now())
+}
